@@ -1,72 +1,60 @@
 import 'dart:async';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_dev/bloc/post/post_bloc.dart';
 import 'package:flutter_dev/models/post.dart';
 import 'package:flutter_dev/repositories/post_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
-class MockRepository extends Mock implements PostRepository {}
+class MockRepo extends Mock implements PostRepository {}
 
 main() {
-  // TODO Failing tests
-  group('ChannelBloc', () {
-    MockRepository repo;
+  group('PostBloc', () {
+    PostRepository repo;
     PostBloc bloc;
     List<Post> posts;
 
     setUp(() {
-      repo = MockRepository();
+      repo = MockRepo();
       bloc = PostBloc(repo);
       posts = List();
-
-      when(repo.getPosts()).thenAnswer(
-            (_) => Future.value(posts),
-            );
     });
 
     tearDown(() {
       bloc?.close();
     });
 
+    group('passes', () {
+      setUp(() {
+        when(() => repo.getPosts()).thenAnswer((_) => Future.value(posts));
+      });
+      
+      blocTest(
+        'emits [] when nothing is added',
+        build: () => PostBloc(repo),
+        expect: () => [],
+      );
 
-    group('Load', () {
-      test('emits [PostLoading, PostLoadSuccess] when posts are loaded',
-                   () {
-                 // Given
-                 final Post post = Post("Post 1");
-                 posts.add(post);
-
-                 // Then
-                 expectLater(
-                   bloc,
-                   emitsInOrder([
-                                  PostLoading(),
-                                  PostLoadSuccess(posts),
-                                ]),
-                   );
-
-                 // When
-                 bloc.add(LoadPosts());
-               });
-
-      test(
-          'emits [PostLoading, PostLoadFailure] when repository throws error',
-              () {
-            //Given
-            when(repo.getPosts()).thenThrow('Testing Error Handling');
-
-            // Then
-            expectLater(
-              bloc,
-              emitsInOrder(<PostState>[
-                             PostLoading(),
-                             PostLoadFailure(),
-                           ]),
-              );
-
-            // When
-            bloc.add(LoadPosts());
-          });
+      blocTest(
+        'emits PostLoading, PostLoadSuccess when LoadPosts is added',
+        build: () => PostBloc(repo),
+        act: (bloc) => bloc.add(LoadPosts()),
+        expect: () => [isA<PostLoading>(), isA<PostLoadSuccess>()],
+      );
     });
-  }, skip: true);
+
+    // when(() => repo.getPosts()).thenThrow(Exception("Test"));
+    group('fails', () {
+      setUp(() {
+        when(() => repo.getPosts()).thenThrow(Exception("Test"));
+      });
+
+      blocTest(
+        'emits PostLoadFailure when exception is thrown',
+        build: () => PostBloc(repo),
+        act: (bloc) => bloc.add(LoadPosts()),
+        expect: () => [isA<PostLoading>(), isA<PostLoadFailure>()],
+      );
+    });
+  });
 }

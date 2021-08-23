@@ -5,22 +5,17 @@ import 'package:flutter_dev/providers/post_provider.dart';
 
 class PostRepository{
   List<Post> _posts;
+  String _after;
 
   PostRepository() {
     _posts = List<Post>();
-    _posts.add(new Post("Post A"));
-    _posts.add(new Post("Post B"));
-    _posts.add(new Post("Post C"));
-    _posts.add(new Post("Post D"));
-    _posts.add(new Post("Post E"));
-    _posts.add(new Post("Post F"));
   }
 
   Future<List<Post>> getPosts() async {
     try {
-      _posts.clear();
-      Map<String, dynamic> map = await PostProvider.getPosts();
+      Map<String, dynamic> map = await PostProvider.getPosts(after: _after);
       map = map["data"];
+      _after = map["after"];
       List<dynamic> list = map["children"];
 
       list.forEach((element) {
@@ -31,7 +26,7 @@ class PostRepository{
     }
     catch (e) {
       debugPrint(e.toString());
-      return null;
+      rethrow;
     }
   }
 }

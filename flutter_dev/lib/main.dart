@@ -4,7 +4,6 @@ import 'package:flutter_dev/Screens/home_screen.dart';
 import 'package:flutter_dev/repositories/post_repository.dart';
 
 import 'bloc/post/post_bloc.dart';
-import 'bloc/post/post_oberver.dart';
 
 void main() {
   runApp(MyApp());
@@ -22,14 +21,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    Bloc.observer = PostBlocObserver();
     return BlocProvider(
       create: (context ) => bloc,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Flutter Dev',
         theme: ThemeData(
-          primarySwatch: Colors.lightBlue,
+          primarySwatch: Colors.orange,
           visualDensity: VisualDensity.adaptivePlatformDensity,
           ),
         home: HomeScreen(),

@@ -4,10 +4,11 @@ import 'package:http/http.dart' as http;
 
 class PostProvider{
 
-  static Future<Map<String, dynamic>> getPosts() async {
+  static Future<Map<String, dynamic>> getPosts({@required String after}) async {
     try {
+      int _limit = 25;
       final response = await http.get(
-        "https://www.reddit.com/r/FlutterDev.json",
+        Uri.parse("https://www.reddit.com/r/FlutterDev.json?limit=$_limit&after=$after"),
         ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -17,7 +18,7 @@ class PostProvider{
       return null;
     } catch (e) {
       debugPrint(e.toString());
-      return null;
+      rethrow;
     }
   }
 

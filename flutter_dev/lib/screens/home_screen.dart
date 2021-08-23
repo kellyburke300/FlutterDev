@@ -9,43 +9,83 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  ScrollController _scrollController;
+  List _posts;
+  PostBloc bloc;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Flutter Dev"),
         ),
-      body: _list(),
+      body: _body(),
       );
   }
 
-  Widget _list() {
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = new ScrollController()..addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.extentAfter < 100 && context.read<PostBloc>().state is! PostLoading) {
+      context.read<PostBloc>()..add(LoadPosts());
+    }
+  }
+
+  Widget _body(){
     return BlocBuilder<PostBloc, PostState>(
       builder: (BuildContext context, PostState state) {
         if (state is PostLoadSuccess) {
-          return ListView.builder(
-            itemCount: state.posts.length,
-            itemBuilder: (BuildContext context, int index) {
-              return PostTile(state.posts[index]);
-            },
-            );
+          _posts = state.posts;
         }
-        else if (state is PostLoading) {
-          // TODO Loading animation
-          return Container(
-            child: Center(
-              child: Text("Loading"),
-              ),
-            );
-        }
-        else {
-          return Container(
-            child: Center(
-              child: Text("Error"),
-              ),
-            );
-        }
+
+        return Stack(
+          children: [
+            _list(),
+            _status(state)
+          ].where((c) => c != null).toList(),
+        );
       },
+    );
+
+  }
+
+  Widget _status( PostState state){
+    if(state is PostLoading){
+      return Center(child: CircularProgressIndicator());
+    }
+    else if(state is PostLoadFailure){
+      return Center(
+        child: TextButton(
+            onPressed:(){
+              context.read<PostBloc>().add(LoadPosts());
+            },
+
+            child: Text("Retry", style: TextStyle(fontSize: 30),))
       );
+    }
+    else{
+      return null;
+    }
+  }
+
+  Widget _list() {
+    return ListView.builder(
+      controller: _scrollController,
+      itemCount: _posts?.length ?? 0,
+      itemBuilder: (BuildContext context, int index) {
+        return PostTile(_posts[index]);
+      },
+    );
   }
 }
